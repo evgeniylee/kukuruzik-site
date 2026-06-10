@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOYCORN — Магия хруста с сюрпризом</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .heading-font {
+            font-family: 'Unbounded', sans-serif;
+        }
+        @keyframes floatPack {
+            0% { transform: translateY(0px) rotate(-2deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(-2deg); }
+        }
+        @keyframes floatStick {
+            0% { transform: translateY(0px) rotate(4deg); }
+            50% { transform: translateY(-15px) rotate(-4deg); }
+            100% { transform: translateY(0px) rotate(4deg); }
+        }
+        .pack-idle {
+            animation: floatPack 4s ease-in-out infinite;
+        }
+        .stick-idle {
+            animation: floatStick 5s ease-in-out infinite;
+        }
+        .smooth-transition {
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #game-canvas {
+            background: linear-gradient(to bottom, #fffbeb, #fafafa);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden antialiased selection:bg-amber-200">
+
+    <!-- Кнопки интерфейса -->
+    <div class="fixed top-6 left-6 z-50 heading-font text-xs font-bold tracking-widest uppercase bg-white/80 backdrop-blur-md px-4 py-2.5 rounded-full border border-gray-100">
+        toycorn.
+    </div>
+    <div class="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <!-- НОВАЯ КНОПКА: О НАС -->
+        <a href="about.html" class="smooth-transition heading-font text-[10px] font-bold tracking-widest uppercase bg-white text-black border border-gray-200 px-5 py-3 rounded-full hover:bg-gray-50 inline-block">
+            О нас
+        </a>
+        <a href="production.html" class="smooth-transition heading-font text-[10px] font-bold tracking-widest uppercase bg-white text-black border border-gray-200 px-5 py-3 rounded-full hover:bg-gray-50 inline-block">
+            Производство →
+        </a>
+        <a href="#contact" class="smooth-transition heading-font text-[10px] font-bold tracking-widest uppercase bg-black text-white px-5 py-3 rounded-full hover:bg-[#F59E0B] hover:scale-105 inline-block">
+            Сотрудничество
+        </a>
+    </div>
+
+    <!-- ФИКСИРОВАННЫЙ КОНТЕЙНЕР ДЛЯ ЛЕТЯЩИХ ПАЛОЧЕК -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="sticks-container">
+        <div class="absolute text-5xl opacity-0 transition-transform duration-75 select-none pointer-events-none will-change-transform" id="stick1" style="top: 52vh; left: 45%;">🍿</div>
+        <div class="absolute text-6xl opacity-0 transition-transform duration-75 select-none pointer-events-none will-change-transform" id="stick2" style="top: 55vh; left: 52%;">🍿</div>
+        <div class="absolute text-4xl opacity-0 transition-transform duration-75 select-none pointer-events-none will-change-transform" id="stick3" style="top: 54vh; left: 47%;">🍿</div>
+        <div class="absolute text-7xl opacity-0 transition-transform duration-75 select-none pointer-events-none will-change-transform" id="stick4" style="top: 56vh; left: 53%;">🍿</div>
+        <div class="absolute text-5xl opacity-0 transition-transform duration-75 select-none pointer-events-none will-change-transform" id="stick5" style="top: 58vh; left: 49%;">🍿</div>
+    </div>
+
+    <!-- БЛОК 1: Главный экран (Hero) -->
+    <section class="relative min-h-screen flex flex-col justify-center items-center px-4 pt-20 text-center bg-transparent overflow-hidden">
+        <div class="max-w-5xl mx-auto space-y-8 z-10">
+            <h1 class="heading-font text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter leading-none">
+                Магия <br><span class="text-[#F59E0B]">Хруста</span>
+            </h1>
+            <p class="text-sm md:text-base text-gray-400 max-w-md mx-auto font-light tracking-wide uppercase">
+                Сладкие кукурузные палочки с крутым призом внутри.
+            </p>
+        </div>
+
+        <!-- Центральная пачка-заглушка -->
+        <div class="relative mt-12 mb-20 z-10">
+            <div class="absolute w-72 h-72 bg-cyan-400 rounded-full blur-[120px] opacity-20 -z-10 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+            
+            <div id="main-pack" class="pack-idle smooth-transition w-48 h-64 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-[2rem] shadow-[0_35px_50px_rgba(6,182,212,0.3)] flex flex-col justify-between p-6 text-white text-left overflow-hidden relative">
+                <div class="absolute -right-8 -bottom-8 text-9xl opacity-10 select-none">🌽</div>
+                <div class="heading-font font-black text-xl tracking-tighter uppercase leading-none">Toy<br>Corn</div>
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold tracking-widest uppercase bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm">BOY SERIES</span>
+                    <p class="text-[9px] text-white/70 font-light pt-1">Сладкие палочки + приз внутри</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-gray-300 heading-font text-[10px] tracking-widest uppercase animate-bounce">
+            Листайте вниз
+        </div>
+    </section>
+
+    <!-- БЛОК 2: Манифест бренда -->
+    <section class="relative min-h-screen flex items-center bg-transparent px-6 md:px-24 py-32 z-10">
+        <div class="max-w-5xl mx-auto space-y-12">
+            <p class="heading-font text-xs font-bold tracking-widest text-[#F59E0B] uppercase">01 / Наша Философия</p>
+            <h2 class="heading-font text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-black leading-tight max-w-4xl">
+                Каждая пачка — это заветное приключение. Мы объединили безупречный вкус кукурузных палочек и радость от качественного подарка.
+            </h2>
+            <div class="grid md:grid-cols-2 gap-8 pt-12 text-gray-600 font-light leading-relaxed text-sm max-w-3xl bg-white/60 backdrop-blur-sm p-6 rounded-3xl border border-white/40 shadow-sm">
+                <p>Мы производим TOYCORN на полностью автоматизированных экструзионных линиях закрытого цикла. Это гарантирует идеальную воздушную форму, деликатный хруст и абсолютную чистоту готового продукта.</p>
+                <p>Особое внимание мы уделяем наполнению: внутри каждой пачки детей ждут по-настоящему интересные, прочные и увлекательные игрушки, подобранные с заботой.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- БЛОК: ИНФОГРАФИКА ПРОДУКТА И СОСТАВ -->
+    <section class="relative min-h-screen bg-transparent px-6 md:px-24 py-24 z-10 flex flex-col justify-center">
+        <div class="max-w-6xl mx-auto w-full space-y-16">
+            
+            <div class="text-center md:text-left space-y-4 max-w-xl">
+                <p class="heading-font text-xs font-bold tracking-widest text-[#F59E0B] uppercase">Анатомия Пользы</p>
+                <h2 class="heading-font text-3xl md:text-5xl font-black uppercase tracking-tight">Чистый Состав</h2>
+                <p class="text-gray-400 text-xs tracking-wider uppercase font-light">Никакой химии, только натуральные ингредиенты и витаминные комплексы для здорового роста.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center pt-8">
+                
+                <!-- Левая колонка инфографики -->
+                <div class="space-y-6 order-2 lg:order-1">
+                    <div class="group bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md smooth-transition hover:-translate-y-1">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-xl shrink-0">🌾</div>
+                            <div class="space-y-1">
+                                <h4 class="heading-font text-xs font-bold uppercase tracking-wide">Кукуруза высшего сорта</h4>
+                                <p class="text-gray-400 text-xs font-light leading-relaxed">Сложные углеводы для долгой энергии активных игр.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md smooth-transition hover:-translate-y-1">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl shrink-0">☀️</div>
+                            <div class="space-y-1">
+                                <h4 class="heading-font text-xs font-bold uppercase tracking-wide">Витамин D3 + Кальций</h4>
+                                <p class="text-gray-400 text-xs font-light leading-relaxed">Важнейший дуэт для прочности костей и укрепления иммунитета.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ЦЕНТР: Парящая Кукурузная Палочка -->
+                <div class="flex justify-center items-center relative h-[300px] lg:h-auto order-1 lg:order-2">
+                    <div class="absolute w-64 h-64 bg-amber-400 rounded-full blur-[100px] opacity-15 -z-10"></div>
+                    <div class="stick-idle relative w-20 h-44 bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 rounded-full shadow-[inset_-8px_-12px_20px_rgba(180,110,10,0.4),0_25px_40px_rgba(217,119,6,0.3)] flex items-center justify-center border border-amber-200/50">
+                        <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#b45309_1px,transparent_1px)] [background-size:8px_8px] rounded-full"></div>
+                        <div class="heading-font text-[9px] font-black text-amber-900/40 tracking-widest uppercase rotate-90 select-none">TOYCORN</div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка инфографики -->
+                <div class="space-y-6 order-3">
+                    <div class="group bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md smooth-transition hover:-translate-y-1">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center text-xl shrink-0">🍎</div>
+                            <div class="space-y-1">
+                                <h4 class="heading-font text-xs font-bold uppercase tracking-wide">Витамины группы B</h4>
+                                <p class="text-gray-400 text-xs font-light leading-relaxed">Поддержка нервной системы, концентрации и отличного настроения.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group bg-white/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md smooth-transition hover:-translate-y-1">
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl shrink-0">🍃</div>
+                            <div class="space-y-1">
+                                <h4 class="heading-font text-xs font-bold uppercase tracking-wide">Энергетическая ценность</h4>
+                                <p class="text-gray-400 text-xs font-light leading-relaxed"><span class="font-bold text-gray-700">390 ккал</span> на 100г. Идеальный легкий перекус без лишних жиров.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- БЛОК 3: Витрина продукции -->
+    <section class="relative min-h-screen bg-transparent px-6 md:px-24 py-32 z-10">
+        <div class="max-w-6xl mx-auto space-y-20">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-white/80 backdrop-blur-md p-8 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="space-y-4">
+                    <p class="heading-font text-xs font-bold tracking-widest text-[#F59E0B] uppercase">02 / Линейка</p>
+                    <h2 class="heading-font text-4xl font-black uppercase">Выбирай свой цвет</h2>
+                </div>
+                <p class="text-gray-400 text-xs font-light tracking-wider uppercase max-w-xs">Яркие пачки со специальными сериями подарков для мальчиков и девочек.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12 pt-6 max-w-4xl mx-auto">
+                <div class="group space-y-6 bg-white/90 backdrop-blur-md rounded-[2.5rem] p-6 shadow-sm border border-gray-100 text-center">
+                    <div class="bg-cyan-50/50 rounded-[2rem] p-8 h-[380px] flex items-center justify-center smooth-transition group-hover:bg-cyan-50">
+                        <div class="w-44 h-56 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-[1.5rem] shadow-lg flex flex-col justify-between p-5 text-white text-left smooth-transition group-hover:scale-105 group-hover:rotate-3 relative overflow-hidden">
+                            <div class="absolute -right-6 -bottom-6 text-8xl opacity-10">🌽</div>
+                            <div class="heading-font font-black text-lg tracking-tighter uppercase leading-none">Toy<br>Corn</div>
+                            <span class="text-[9px] font-bold tracking-widest bg-white/20 px-2 py-1 rounded-full w-max">BOY SERIES</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <h4 class="heading-font text-lg font-bold">Серия для Мальчиков</h4>
+                        <p class="text-sm text-gray-400 font-light">Внутри: роботы, машинки, конструкторы и технологичные сюрпризы.</p>
+                    </div>
+                </div>
+
+                <div class="group space-y-6 bg-white/90 backdrop-blur-md rounded-[2.5rem] p-6 shadow-sm border border-gray-100 text-center">
+                    <div class="bg-pink-50/50 rounded-[2rem] p-8 h-[380px] flex items-center justify-center smooth-transition group-hover:bg-pink-50">
+                        <div class="w-44 h-56 bg-gradient-to-br from-pink-400 to-rose-500 rounded-[1.5rem] shadow-lg flex flex-col justify-between p-5 text-white text-left smooth-transition group-hover:scale-105 group-hover:-rotate-3 relative overflow-hidden">
+                            <div class="absolute -right-6 -bottom-6 text-8xl opacity-10">🍿</div>
+                            <div class="heading-font font-black text-lg tracking-tighter uppercase leading-none">Toy<br>Corn</div>
+                            <span class="text-[9px] font-bold tracking-widest bg-white/20 px-2 py-1 rounded-full w-max">GIRL SERIES</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <h4 class="heading-font text-lg font-bold">Серия для Девочек</h4>
+                        <p class="text-sm text-gray-400 font-light">Внутри: куклы, стильные украшения, фигурки и яркие аксессуары.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- БЛОК: ИГРА + РЕЙТИНГ -->
+    <section class="relative min-h-screen bg-transparent px-4 md:px-12 lg:px-24 py-20 z-20 flex flex-col justify-center items-center">
+        <div class="max-w-4xl mx-auto w-full text-center space-y-4 mb-12">
+            <p class="heading-font text-xs font-bold tracking-widest text-[#F59E0B] uppercase">Интерактив</p>
+            <h2 class="heading-font text-4xl font-black uppercase">Поиграем?</h2>
+            <p class="text-gray-400 text-xs tracking-wider uppercase font-light">Управляй пачкой TOYCORN: облетай препятствия и собирай палочки! <br class="hidden md:inline">ПК: Пробел / Смартфон: Тап по экрану игры</p>
+        </div>
+
+        <div class="w-full max-w-5xl grid md:grid-cols-12 gap-8 items-stretch">
+            
+            <!-- ТАБЛИЦА РЕЙТИНГА -->
+            <div class="md:col-span-4 bg-white rounded-[2.5rem] p-6 border border-gray-100 shadow-xl flex flex-col justify-between min-h-[320px]">
+                <div>
+                    <h3 class="heading-font text-sm font-black uppercase tracking-tight mb-6 flex items-center gap-2">
+                        🏆 Топ Хрустеров
+                    </h3>
+                    <div id="leaderboard-list" class="space-y-3.5">
+                        <!-- Заполнится через JS -->
+                    </div>
+                </div>
+                <div class="text-[10px] text-gray-400 font-light tracking-wide uppercase text-center mt-6 pt-4 border-t border-gray-50">
+                    Рейтинг сохраняет ваши рекорды
+                </div>
+            </div>
+
+            <!-- ИГРОВАЯ ЗОНА -->
+            <div class="md:col-span-8 relative w-full aspect-[4/3] md:aspect-[16/10] bg-white rounded-[2.5rem] p-3 shadow-xl border border-gray-100 overflow-hidden">
+                <canvas id="game-canvas" class="w-full h-full rounded-[2rem] block"></canvas>
+                
+                <!-- Меню игры -->
+                <div id="game-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-md rounded-[2.5rem] flex flex-col items-center justify-center p-6 text-white text-center transition-opacity duration-300">
+                    <div id="game-status-text" class="heading-font text-xl md:text-2xl font-black mb-2 tracking-tight">ПОМОГИ ПАЧКЕ ВЗЛЕТЕТЬ</div>
+                    <div id="game-score-final" class="text-xs font-light uppercase tracking-widest mb-6 opacity-80">Введите имя для таблицы лидеров</div>
+                    
+                    <div id="auth-box" class="w-full max-w-xs mb-6">
+                        <input type="text" id="player-name-input" maxlength="12" placeholder="ВАШЕ ИМЯ" class="w-full bg-white/10 border border-white/20 rounded-full px-6 py-3 text-center text-sm font-medium tracking-widest uppercase text-white placeholder-white/40 focus:outline-none focus:border-amber-400 focus:bg-white/20 transition-all">
+                    </div>
+
+                    <button id="start-btn" class="heading-font text-xs font-bold tracking-widest uppercase bg-amber-400 text-black px-10 py-4 rounded-full shadow-lg hover:bg-white hover:scale-105 transition-all cursor-pointer">
+                        НАЧАТЬ ИГРУ
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- БЛОК 4: Оптовые закупки -->
+    <section id="contact" class="min-h-screen bg-black text-white flex flex-col justify-between p-8 md:p-16 relative z-30">
+        <div class="max-w-5xl mx-auto w-full pt-20 space-y-6">
+            <p class="heading-font text-xs font-bold tracking-widest text-[#F59E0B] uppercase">03 / Партнерство</p>
+            <h2 class="heading-font text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none">
+                Давайте <br>строить <br><span class="text-[#F59E0B]">Бизнес.</span>
+            </h2>
+        </div>
+
+        <div class="max-w-md mx-auto w-full pb-12 pt-16">
+            <form class="space-y-6">
+                <input type="text" placeholder="ИМЯ ИЛИ КОМПАНИЯ" class="w-full bg-transparent border-b border-gray-800 py-4 text-sm font-light tracking-wider uppercase text-white focus:outline-none focus:border-[#F59E0B] smooth-transition">
+                <input type="tel" placeholder="ТЕЛЕФОН" class="w-full bg-transparent border-b border-gray-800 py-4 text-sm font-light tracking-wider uppercase text-white focus:outline-none focus:border-[#F59E0B] smooth-transition">
+                <button type="submit" class="w-full bg-[#F59E0B] text-white font-bold py-5 rounded-full heading-font text-xs tracking-widest uppercase hover:bg-white hover:text-black smooth-transition">
+                    Оставить заявку
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- СКРИПТЫ -->
+    <script>
+        // Скролл анимация пачки и палочек
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            
+            const mainPack = document.getElementById('main-pack');
+            if (mainPack) {
+                if (scrollTop > 5) {
+                    mainPack.classList.remove('pack-idle');
+                    const moveY = scrollTop * 0.4;
+                    const rotate = -2 + (scrollTop * 0.15);
+                    const opacity = 1 - (scrollTop / (windowHeight * 0.45));
+                    
+                    if (opacity >= 0) {
+                        mainPack.style.transform = `translateY(${moveY}px) rotate(${rotate}deg) scale(${1 - scrollTop*0.0008})`;
+                        mainPack.style.opacity = opacity;
+                    } else {
+                        mainPack.style.opacity = 0;
+                    }
+                } else {
+                    mainPack.classList.add('pack-idle');
+                    mainPack.style.transform = '';
+                    mainPack.style.opacity = '1';
+                }
+            }
+
+            const sticks = [
+                { el: document.getElementById('stick1'), spreadX: -3.5, driftY: 0.05, rot: 0.3 },
+                { el: document.getElementById('stick2'), spreadX: 4.5, driftY: -0.02, rot: -0.15 },
+                { el: document.getElementById('stick3'), spreadX: -5.5, driftY: 0.08, rot: 0.4 },
+                { el: document.getElementById('stick4'), spreadX: 6.0, driftY: 0.02, rot: -0.2 },
+                { el: document.getElementById('stick5'), spreadX: -1.0, driftY: -0.05, rot: 0.2 }
+            ];
+
+            const triggerScroll = 30;
+            if (scrollTop > triggerScroll) {
+                const progress = scrollTop - triggerScroll;
+                sticks.forEach((stick) => {
+                    if(stick.el) {
+                        const explosionX = stick.spreadX * Math.min(45, progress * 0.6);
+                        const explosionY = Math.min(50, progress * 0.5);
+                        const curX = explosionX;
+                        const curY = explosionY + (progress * stick.driftY);
+                        const rotate = progress * stick.rot;
+                        stick.el.style.opacity = Math.min(0.85, progress / 60);
+                        stick.el.style.transform = `translate(${curX}px, ${curY}px) rotate(${rotate}deg)`;
+                    }
+                });
+            } else {
+                sticks.forEach(stick => {
+                    if(stick.el) {
+                        stick.el.style.opacity = '0';
+                        stick.el.style.transform = '';
+                    }
+                });
+            }
+        });
+
+        // --- ЛОГИКА ТАБЛИЦЫ РЕЙТИНГА ---
+        let mockLeaders = [
+            { name: 'Дмитрий_Зав', score: 24 },
+            { name: 'АннаКонда', score: 19 },
+            { name: 'МаксХруст', score: 15 },
+            { name: 'Конвейер99', score: 11 },
+            { name: 'Мария_К', score: 7 }
+        ];
+
+        function renderLeaderboard() {
+            const listEl = document.getElementById('leaderboard-list');
+            if (!listEl) return;
+            
+            const localName = localStorage.getItem('toycorn_player_name') || '';
+            const localScore = parseInt(localStorage.getItem('toycorn_player_highscore')) || 0;
+
+            let allLeaders = [...mockLeaders];
+            if (localName && localScore > 0) {
+                const existingIdx = allLeaders.findIndex(l => l.name.toUpperCase() === localName.toUpperCase());
+                if (existingIdx !== -1) {
+                    if (localScore > allLeaders[existingIdx].score) allLeaders[existingIdx].score = localScore;
+                } else {
+                    allLeaders.push({ name: localName, score: localScore });
+                }
+            }
+
+            allLeaders.sort((a, b) => b.score - a.score);
+            allLeaders = allLeaders.slice(0, 5);
+
+            listEl.innerHTML = '';
+            allLeaders.forEach((leader, idx) => {
+                const isCurrent = localName && leader.name.toUpperCase() === localName.toUpperCase();
+                listEl.innerHTML += `
+                    <div class="flex items-center justify-between text-xs px-4 py-2.5 rounded-2xl transition-all ${isCurrent ? 'bg-amber-100 font-bold text-amber-900 border border-amber-200' : 'bg-gray-50/60 text-gray-700'}">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold opacity-40">${idx + 1}.</span>
+                            <span class="uppercase tracking-wider truncate max-w-[120px]">${leader.name}</span>
+                        </div>
+                        <div class="flex items-center gap-1 font-mono font-bold">
+                            <span>${leader.score}</span>
+                            <span class="text-[10px] opacity-50 font-normal">шт</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- ЛОГИКА ИГРЫ FLAPPY TOYCORN ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('game-overlay');
+        const startBtn = document.getElementById('start-btn');
+        const nameInput = document.getElementById('player-name-input');
+        const statusText = document.getElementById('game-status-text');
+        const scoreFinalText = document.getElementById('game-score-final');
+        const authBox = document.getElementById('auth-box');
+
+        if(localStorage.getItem('toycorn_player_name')) {
+            nameInput.value = localStorage.getItem('toycorn_player_name');
+        }
+        renderLeaderboard();
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width || 600;
+            canvas.height = rect.height || 400;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let gameState = 'IDLE';
+        let score = 0;
+        let pack = { x: 60, y: 150, w: 36, h: 48, velocity: 0, gravity: 0.24, jump: -5.0 };
+        let obstacles = [];
+        let items = [];
+        let frameId = null;
+        let nextObstacleFrame = 0;
+        let currentPlayerName = '';
+
+        function initGame() {
+            score = 0;
+            pack.y = canvas.height / 2;
+            pack.velocity = 0;
+            obstacles = [];
+            items = [];
+            nextObstacleFrame = 0;
+        }
+
+        function spawnElements() {
+            nextObstacleFrame--;
+            if (nextObstacleFrame <= 0) {
+                const gap = Math.max(120, canvas.height * 0.35);
+                const minHeight = 30;
+                const maxHeight = canvas.height - gap - minHeight;
+                const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+                const botHeight = canvas.height - gap - topHeight;
+
+                obstacles.push({ x: canvas.width, topHeight: topHeight, botHeight: botHeight, w: 50 });
+                items.push({ x: canvas.width + 15, y: topHeight + gap / 2, radius: 12, collected: false });
+                nextObstacleFrame = Math.floor(canvas.width / 2.5);
+            }
+        }
+
+        function jump() { 
+            if (gameState === 'PLAYING') pack.velocity = pack.jump; 
+        }
+
+        window.addEventListener('keydown', (e) => { 
+            if (e.code === 'Space' && gameState === 'PLAYING') {
+                e.preventDefault(); 
+                jump(); 
+            } 
+        });
+        canvas.addEventListener('touchstart', (e) => { 
+            if(gameState === 'PLAYING') {
+                e.preventDefault(); 
+                jump(); 
+            }
+        }, { passive: false });
+        canvas.addEventListener('mousedown', (e) => {
+            if(gameState === 'PLAYING') jump();
+        });
+
+        startBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            let inputName = nameInput.value.trim();
+            if(!inputName) {
+                nameInput.placeholder = "ИМЯ ОБЯЗАТЕЛЬНО!";
+                nameInput.classList.add('border-red-500', 'bg-red-500/10');
+                setTimeout(() => {
+                    nameInput.placeholder = "ВАШЕ ИМЯ";
+                    nameInput.classList.remove('border-red-500', 'bg-red-500/10');
+                }, 1500);
+                return;
+            }
+
+            currentPlayerName = inputName;
+            localStorage.setItem('toycorn_player_name', currentPlayerName);
+
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            authBox.classList.add('hidden'); 
+            initGame();
+            gameState = 'PLAYING';
+            loop();
+        });
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            cancelAnimationFrame(frameId);
+
+            const currentHighscore = parseInt(localStorage.getItem('toycorn_player_highscore')) || 0;
+            if(score > currentHighscore) {
+                localStorage.setItem('toycorn_player_highscore', score);
+            }
+
+            renderLeaderboard();
+
+            statusText.innerText = "ИГРА ОКОНЧЕНА";
+            scoreFinalText.innerHTML = `${currentPlayerName}, твой счет: <span class="text-[#F59E0B] font-bold">${score}</span> палочек`;
+            startBtn.innerText = "ИГРАТЬ СНОВА";
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function loop() {
+            if (gameState !== 'PLAYING') return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            pack.velocity += pack.gravity;
+            pack.y += pack.velocity;
+
+            if (pack.y + pack.h > canvas.height || pack.y < 0) { gameOver(); return; }
+
+            ctx.save();
+            ctx.translate(pack.x + pack.w/2, pack.y + pack.h/2);
+            ctx.rotate(Math.min(Math.max(-0.2, pack.velocity * 0.04), 0.4));
+            
+            ctx.fillStyle = '#22d3ee'; 
+            ctx.beginPath(); 
+            ctx.roundRect(-pack.w/2, -pack.h/2, pack.w, pack.h, 8); 
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 8px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('TOY', 0, -3); ctx.fillText('CORN', 0, 7);
+            ctx.restore();
+
+            spawnElements();
+
+            ctx.fillStyle = '#1e293b';
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= 2.4;
+
+                ctx.beginPath(); ctx.roundRect(obs.x, 0, obs.w, obs.topHeight, [0, 0, 12, 12]); ctx.fill();
+                ctx.beginPath(); ctx.roundRect(obs.x, canvas.height - obs.botHeight, obs.w, obs.botHeight, [12, 12, 0, 0]); ctx.fill();
+
+                if (pack.x + pack.w > obs.x && pack.x < obs.x + obs.w && (pack.y < obs.topHeight || pack.y + pack.h > canvas.height - obs.botHeight)) {
+                    gameOver(); return;
+                }
+                if (obs.x + obs.w < 0) obstacles.splice(i, 1);
+            }
+
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.x -= 2.4;
+                
+                if (!item.collected) {
+                    ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('🍿', item.x, item.y);
+
+                    let distX = Math.abs(item.x - (pack.x + pack.w/2));
+                    let distY = Math.abs(item.y - (pack.y + pack.h/2));
+                    if (distX < (pack.w/2 + item.radius) && distY < (pack.h/2 + item.radius)) {
+                        item.collected = true; 
+                        score += 1;
+                    }
+                }
+                if (item.x + item.radius < 0) items.splice(i, 1);
+            }
+
+            ctx.fillStyle = '#000000';
+            ctx.font = '900 28px Unbounded, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(score, canvas.width / 2, 50);
+
+            frameId = requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>
